@@ -16,6 +16,12 @@ const pillsEl = document.getElementById("pills");
 const fixesEl = document.getElementById("fixes");
 const toolsEl = document.getElementById("chart-tools");
 const keywordLead = document.getElementById("keyword-lead");
+const nextEl = document.getElementById("next");
+const nextList = document.getElementById("next-list");
+const resumeCount = document.getElementById("resume-count");
+const resumeRange = document.getElementById("resume-range");
+const resumeMeter = document.getElementById("resume-meter");
+const jobCount = document.getElementById("job-count");
 
 const KIND = {
   section: "Section",
@@ -30,6 +36,8 @@ let pdfFile = null;
 let latestMarkdown = "";
 let scoreFrame = 0;
 
+resumeInput.addEventListener("input", updateMeters);
+jobInput.addEventListener("input", updateMeters);
 document.getElementById("btn-sample").addEventListener("click", loadSample);
 document.getElementById("btn-download").addEventListener("click", downloadReport);
 document.getElementById("btn-reset").addEventListener("click", resetChart);
@@ -67,6 +75,7 @@ async function loadSample() {
     clearFile();
     resumeInput.value = payload.resume;
     jobInput.value = payload.job;
+    updateMeters();
     setStatus("Sample loaded. It is missing a Skills section on purpose.");
     resumeInput.focus();
   } catch (error) {
@@ -91,6 +100,7 @@ function acceptFile(file) {
     reader.onload = () => {
       resumeInput.value = String(reader.result || "");
       clearFile();
+      updateMeters();
       setStatus(`Loaded ${name} into the resume box.`);
     };
     reader.onerror = () => setStatus("Could not read that file. Paste the text instead.", "bad");
@@ -110,6 +120,9 @@ function acceptFile(file) {
     setStatus("PDF removed.");
   });
   fileNote.append(remove);
+  resumeCount.textContent = "PDF attached";
+  resumeRange.textContent = "Word count shows after the check";
+  resumeMeter.dataset.tone = "warn";
   setStatus("");
 }
 
@@ -118,6 +131,7 @@ function clearFile() {
   fileInput.value = "";
   fileNote.hidden = true;
   fileNote.textContent = "";
+  updateMeters();
 }
 
 async function onSubmit(event) {
@@ -153,11 +167,9 @@ async function onSubmit(event) {
     }
     latestMarkdown = payload.markdown || "";
     renderReport(payload.report);
-    const fixes = (payload.report.fixes || []).length;
-    setStatus(`Score ${payload.report.score} out of 100. ${fixes} fix${fixes === 1 ? "" : "es"}.`);
-    if (window.matchMedia("(max-width: 860px)").matches) {
-      document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    const steps = nextList.children.length;
+    setStatus(`Score ${payload.report.score} out of 100. Start with the ${steps} steps under the score.`);
+    document.getElementById("chart").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
     setStatus(error.message || "The check failed.", "bad");
   } finally {
@@ -173,9 +185,36 @@ function renderReport(report) {
   pageNote.textContent = stats.page_guidance || "";
   animateScore(report.score);
   renderBars(report.breakdown || []);
+  renderNext(report);
   renderPills(report.keywords || []);
   renderFixes(report.fixes || []);
   toolsEl.hidden = false;
+}
+
+function renderNext(report) {
+  const steps = [];
+  const fixes = report.fixes || [];
+  const section = fixes.find((fix) => fix.kind === "section");
+  if (section) steps.push(section.suggestion);
+  const keyword = (report.missing_keywords || [])[0];
+  if (keyword) {
+    const times = keyword.jd_count === 1 ? "once" : `${keyword.jd_count} times`;
+    steps.push(`Add ${keyword.term}. The job says it ${times}, and your resume does not.`);
+  }
+  const line = fixes.find((fix) => fix.kind === "verb") || fixes.find((fix) => fix.kind === "metric");
+  if (line && line.text) {
+    const weak = fixes.find((fix) => fix.kind === "verb" && fix.text === line.text);
+    const metric = fixes.find((fix) => fix.kind === "metric" && fix.text === line.text);
+    const advice = [weak && weak.suggestion, metric && metric.suggestion].filter(Boolean).join(" ");
+    steps.push(`Rewrite “${clip(line.text, 90)}”. ${advice}`);
+  }
+  nextList.textContent = "";
+  steps.slice(0, 3).forEach((text) => {
+    const item = document.createElement("li");
+    item.textContent = text;
+    nextList.append(item);
+  });
+  nextEl.hidden = steps.length === 0;
 }
 
 function animateScore(target) {
@@ -239,17 +278,31 @@ function renderPills(keywords) {
   keywordLead.textContent = missing.length
     ? `${missing.length} missing. The number is how often the job says it.`
     : "Every extracted keyword shows up in the resume.";
-  [...missing, ...present].forEach((item) => {
+  pillsEl.append(pillGroup("Missing", missing, true));
+  if (present.length) pillsEl.append(pillGroup("Already on the resume", present, false));
+}
+
+function pillGroup(label, items, isMissing) {
+  const group = document.createElement("div");
+  group.className = "pill-group";
+  const title = document.createElement("p");
+  title.className = "group-label" + (isMissing ? " missing" : " ok");
+  title.textContent = label;
+  const row = document.createElement("div");
+  row.className = "pills";
+  row.style.marginTop = "0";
+  items.forEach((item) => {
     const pill = document.createElement("span");
     pill.className = "pill" + (item.in_resume ? "" : " missing");
-    pill.title = item.in_resume ? "Found in the resume" : "Not in the resume";
     const term = document.createElement("span");
     term.textContent = item.term;
     const count = document.createElement("em");
     count.textContent = String(item.jd_count);
     pill.append(term, count);
-    pillsEl.append(pill);
+    row.append(pill);
   });
+  group.append(title, row);
+  return group;
 }
 
 function renderFixes(fixes) {
@@ -261,24 +314,79 @@ function renderFixes(fixes) {
     fixesEl.append(empty);
     return;
   }
+  const loose = fixes.filter((fix) => fix.kind !== "verb" && fix.kind !== "metric");
+  loose.forEach((fix) => fixesEl.append(fixCard(fix.kind, fix.text, [fix.suggestion])));
+  const lines = mergeLines(fixes);
+  if (!lines.length) return;
+  const shown = lines.slice(0, 5);
+  const rest = lines.slice(5);
+  shown.forEach((line) => fixesEl.append(fixCard("verb", line.text, line.notes)));
+  if (!rest.length) return;
+  const more = document.createElement("button");
+  more.type = "button";
+  more.className = "text-btn more";
+  more.textContent = `Show ${rest.length} more line${rest.length === 1 ? "" : "s"}`;
+  more.addEventListener("click", () => {
+    rest.forEach((line) => fixesEl.insertBefore(fixCard("verb", line.text, line.notes), more));
+    more.remove();
+  });
+  fixesEl.append(more);
+}
+
+function mergeLines(fixes) {
+  const order = [];
+  const byText = new Map();
   fixes.forEach((fix) => {
-    const card = document.createElement("article");
-    card.className = `fix ${fix.kind || ""}`;
-    const kind = document.createElement("p");
-    kind.className = "fix-kind";
-    kind.textContent = KIND[fix.kind] || "Fix";
-    card.append(kind);
-    if (fix.text) {
-      const quote = document.createElement("blockquote");
-      quote.textContent = fix.text;
-      card.append(quote);
+    if (fix.kind !== "verb" && fix.kind !== "metric") return;
+    const key = fix.text || fix.suggestion;
+    if (!byText.has(key)) {
+      byText.set(key, { text: fix.text, notes: [] });
+      order.push(key);
     }
+    byText.get(key).notes.push(fix.suggestion);
+  });
+  return order.map((key) => byText.get(key));
+}
+
+function fixCard(kind, text, notes) {
+  const card = document.createElement("article");
+  card.className = `fix ${kind || ""}`;
+  const label = document.createElement("p");
+  label.className = "fix-kind";
+  label.textContent = kind === "verb" ? "Line" : (KIND[kind] || "Fix");
+  card.append(label);
+  if (text) {
+    const quote = document.createElement("blockquote");
+    quote.textContent = text;
+    card.append(quote);
+  }
+  notes.forEach((note) => {
     const suggestion = document.createElement("p");
     suggestion.className = "fix-suggestion";
-    suggestion.textContent = fix.suggestion;
+    suggestion.textContent = note;
     card.append(suggestion);
-    fixesEl.append(card);
   });
+  const actions = document.createElement("div");
+  actions.className = "fix-actions";
+  const copy = document.createElement("button");
+  copy.type = "button";
+  copy.className = "text-btn";
+  copy.textContent = "Copy this fix";
+  copy.addEventListener("click", async () => {
+    const payload = [text, ...notes].filter(Boolean).join("\n");
+    try {
+      await navigator.clipboard.writeText(payload);
+      copy.textContent = "Copied";
+    } catch {
+      copy.textContent = "Copy failed";
+    }
+    window.setTimeout(() => {
+      copy.textContent = "Copy this fix";
+    }, 1400);
+  });
+  actions.append(copy);
+  card.append(actions);
+  return card;
 }
 
 function downloadReport() {
@@ -300,6 +408,8 @@ function resetChart() {
   pageNote.textContent = "400–900 words is the readable range. One page if you are early in your career, two if you are not.";
   scorecard.dataset.tone = "idle";
   toolsEl.hidden = true;
+  nextEl.hidden = true;
+  nextList.textContent = "";
   keywordLead.textContent = "Missing ones are listed first, the ones the job repeats most often at the front.";
   barsEl.innerHTML = "";
   ["Sections|0/25", "Keywords|0/35", "Measurable impact|0/20", "Action verbs|0/10", "Length and clarity|0/10"].forEach((row) => {
@@ -327,6 +437,39 @@ function resetChart() {
   example.append(quote, suggestion);
   fixesEl.append(example);
   setStatus("Score cleared.");
+}
+
+function updateMeters() {
+  const resumeWords = wordCount(resumeInput.value);
+  const jobWords = wordCount(jobInput.value);
+  if (!pdfFile) {
+    resumeCount.textContent = `${resumeWords} word${resumeWords === 1 ? "" : "s"}`;
+    if (!resumeWords) {
+      resumeRange.textContent = "Aim for 400–900";
+      delete resumeMeter.dataset.tone;
+    } else if (resumeWords < 400) {
+      resumeRange.textContent = "Short of the 400–900 range";
+      resumeMeter.dataset.tone = "warn";
+    } else if (resumeWords > 900) {
+      resumeRange.textContent = "Over the 400–900 range";
+      resumeMeter.dataset.tone = "bad";
+    } else {
+      resumeRange.textContent = "In the 400–900 range";
+      resumeMeter.dataset.tone = "good";
+    }
+  }
+  jobCount.textContent = `${jobWords} word${jobWords === 1 ? "" : "s"}`;
+}
+
+function wordCount(text) {
+  const trimmed = text.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+}
+
+function clip(text, limit) {
+  const compact = text.replace(/\s+/g, " ").trim();
+  if (compact.length <= limit) return compact;
+  return compact.slice(0, limit - 1).trimEnd() + "…";
 }
 
 function setStatus(message, tone) {

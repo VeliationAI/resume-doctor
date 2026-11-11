@@ -44,8 +44,9 @@
               </label>
             </div>
           </div>
-          <textarea id="resume" name="resume" rows="12" placeholder="Paste the resume. Headings like Summary, Experience, Education, and Skills help the score." spellcheck="true"></textarea>
+          <textarea id="resume" name="resume" rows="12" placeholder="Paste the resume, or drop a PDF on this card. Headings like Summary, Experience, Education, and Skills help the score." spellcheck="true"></textarea>
           <p class="file-note" id="file-note" hidden></p>
+          <p class="meter" id="resume-meter"><span id="resume-count">0 words</span><span id="resume-range">Aim for 400–900</span></p>
         </div>
 
         <div class="sheet">
@@ -53,6 +54,7 @@
             <label for="job">Job description</label>
           </div>
           <textarea id="job" name="job" rows="10" placeholder="Paste the posting. The more of the real text you include, the better the keyword list." spellcheck="true"></textarea>
+          <p class="meter"><span id="job-count">0 words</span><span>Ctrl+Enter checks</span></p>
         </div>
 
         <div class="form-bar">
@@ -95,6 +97,11 @@
           </li>
         </ul>
       </article>
+
+      <section class="next" id="next" hidden>
+        <h2>Do these first</h2>
+        <ol id="next-list"></ol>
+      </section>
 
       <div class="chart-tools" id="chart-tools" hidden>
         <button type="button" class="btn ghost" id="btn-download">Download report</button>
