@@ -33,7 +33,7 @@ const KIND = {
 };
 
 let pdfFile = null;
-let latestMarkdown = "";
+let latestReport = null;
 let scoreFrame = 0;
 
 resumeInput.addEventListener("input", updateMeters);
@@ -165,7 +165,7 @@ async function onSubmit(event) {
       const detail = payload.detail;
       throw new Error(typeof detail === "string" ? detail : "The check failed.");
     }
-    latestMarkdown = payload.markdown || "";
+    latestReport = payload.report;
     renderReport(payload.report);
     const steps = nextList.children.length;
     setStatus(`Score ${payload.report.score} out of 100. Start with the ${steps} steps under the score.`);
@@ -191,7 +191,7 @@ function renderReport(report) {
   toolsEl.hidden = false;
 }
 
-function renderNext(report) {
+function firstSteps(report) {
   const steps = [];
   const fixes = report.fixes || [];
   const section = fixes.find((fix) => fix.kind === "section");
@@ -208,8 +208,13 @@ function renderNext(report) {
     const advice = [weak && weak.suggestion, metric && metric.suggestion].filter(Boolean).join(" ");
     steps.push(`Rewrite “${clip(line.text, 90)}”. ${advice}`);
   }
+  return steps.slice(0, 3);
+}
+
+function renderNext(report) {
+  const steps = firstSteps(report);
   nextList.textContent = "";
-  steps.slice(0, 3).forEach((text) => {
+  steps.forEach((text) => {
     const item = document.createElement("li");
     item.textContent = text;
     nextList.append(item);
@@ -389,20 +394,94 @@ function fixCard(kind, text, notes) {
   return card;
 }
 
+function reportHtml(report) {
+  const steps = firstSteps(report).map((step) => `<li>${esc(step)}</li>`).join("");
+  const bars = (report.breakdown || []).map((category) => (
+    `<tr><td>${esc(category.name)}</td><td>${category.points}/${category.max_points}</td><td>${esc(category.detail)}</td></tr>`
+  )).join("");
+  const missing = (report.keywords || []).filter((item) => !item.in_resume);
+  const present = (report.keywords || []).filter((item) => item.in_resume);
+  const pills = (items) => items.map((item) => `<span class="pill">${esc(item.term)} <em>${item.jd_count}</em></span>`).join("");
+  const lines = mergeLines(report.fixes || []).map((line) => (
+    `<article><h3>Line</h3>${line.text ? `<blockquote>${esc(line.text)}</blockquote>` : ""}<p>${line.notes.map(esc).join("</p><p>")}</p></article>`
+  )).join("");
+  const loose = (report.fixes || []).filter((fix) => fix.kind !== "verb" && fix.kind !== "metric").map((fix) => (
+    `<article><h3>${esc(KIND[fix.kind] || "Fix")}</h3>${fix.text ? `<blockquote>${esc(fix.text)}</blockquote>` : ""}<p>${esc(fix.suggestion)}</p></article>`
+  )).join("");
+  const tone = report.band_tone === "good" ? "#0f3d36" : report.band_tone === "warn" ? "#3a2a14" : "#3d211b";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resume Doctor report — ${esc(report.score)}</title>
+  <style>
+    body { margin: 0; background: #efe6d6; color: #1c1916; font: 16px/1.5 "Segoe UI", sans-serif; }
+    main { width: min(820px, calc(100% - 2rem)); margin: 1.5rem auto 3rem; }
+    .score { background: ${tone}; color: #f6f1e7; border-radius: 18px; padding: 1.3rem 1.4rem; }
+    .score strong { display: block; font-size: 4rem; line-height: 0.9; font-weight: 560; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: #fffdf8; }
+    th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid #ddd2c0; vertical-align: top; }
+    h2 { font-size: 1.4rem; margin: 1.4rem 0 0.4rem; }
+    ol { padding-left: 1.2rem; }
+    .pill { display: inline-block; margin: 0.2rem 0.3rem 0.2rem 0; padding: 0.2rem 0.55rem; border-radius: 99px; background: #f8e4dc; color: #7c2d1d; font-weight: 650; }
+    .pill.ok { background: #d8f3ea; color: #12312e; }
+    article { background: #fffdf8; border: 1px solid #ddd2c0; border-left: 4px solid #b6402a; border-radius: 12px; padding: 0.8rem 0.9rem; margin: 0.6rem 0; }
+    blockquote { margin: 0.3rem 0; font-size: 1.05rem; }
+    button { border: 0; background: #12312e; color: #f6f1e7; border-radius: 99px; padding: 0.7rem 1rem; font: inherit; cursor: pointer; }
+    @media print { .no-print { display: none; } body { background: white; } }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="no-print"><button type="button" onclick="print()">Print or save as PDF</button></p>
+    <section class="score">
+      <p>ATS score</p>
+      <strong>${esc(report.score)}</strong>
+      <p>${esc(report.band_label)}</p>
+      <p>${esc((report.stats || {}).page_guidance || "")}</p>
+    </section>
+    <h2>Do these first</h2>
+    <ol>${steps}</ol>
+    <h2>Breakdown</h2>
+    <table>
+      <thead><tr><th>Check</th><th>Score</th><th>Notes</th></tr></thead>
+      <tbody>${bars}</tbody>
+    </table>
+    <h2>Missing keywords</h2>
+    <p>${pills(missing) || "None."}</p>
+    <h2>Already on the resume</h2>
+    <p>${present.length ? `<span class="ok-wrap">${pills(present).replaceAll('class="pill"', 'class="pill ok"')}</span>` : "None yet."}</p>
+    <h2>Line-by-line fixes</h2>
+    ${loose}${lines}
+  </main>
+</body>
+</html>`;
+}
+
+function esc(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function downloadReport() {
-  if (!latestMarkdown) return;
-  const blob = new Blob([latestMarkdown], { type: "text/markdown" });
+  if (!latestReport) return;
+  const blob = new Blob([reportHtml(latestReport)], { type: "text/html;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "resume-doctor-report.md";
+  link.download = "resume-doctor-report.html";
   document.body.append(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(link.href);
+  setStatus("Saved resume-doctor-report.html. Open it in a browser, then print if you want a PDF.");
 }
 
 function resetChart() {
-  latestMarkdown = "";
+  latestReport = null;
   scoreEl.textContent = "—";
   bandEl.textContent = "Waiting for a resume";
   pageNote.textContent = "400–900 words is the readable range. One page if you are early in your career, two if you are not.";
