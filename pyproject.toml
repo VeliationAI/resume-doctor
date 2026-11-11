@@ -36,7 +36,7 @@ Repository = "https://github.com/VeliationAI/resume-doctor"
 include = ["resume_doctor*"]
 
 [tool.setuptools.package-data]
-resume_doctor = ["static/*", "templates/*"]
+resume_doctor = ["static/*", "templates/*", "fonts/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
