@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resume Doctor — ATS score and line-by-line fixes</title>
+  <meta name="description" content="Paste a resume next to a job description. Get an ATS score, the missing keywords, and a fix for every weak line." />
+  <meta name="theme-color" content="#12312e" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <a class="skip" href="#resume">Skip to the resume</a>
+
+  <header class="top">
+    <a class="brand" href="/">
+      <span class="mark" aria-hidden="true"></span>
+      Resume Doctor
+    </a>
+    <nav class="top-nav">
+      <span class="quiet">No account. The rubric runs here.</span>
+      <a href="https://github.com/VeliationAI/resume-doctor" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="workspace">
+    <section class="intake-col">
+      <p class="eyebrow">For people who apply and hear nothing</p>
+      <h1>The ATS never tells you why.</h1>
+      <p class="lede">Paste the resume next to the job. You get a score out of 100, the keywords the posting keeps repeating, and a fix for every weak line.</p>
+
+      <form id="check-form">
+        <div class="sheet" id="resume-sheet">
+          <div class="sheet-head">
+            <label for="resume">Resume</label>
+            <div class="sheet-actions">
+              <button type="button" class="text-btn" id="btn-sample">Try a flawed sample</button>
+              <label class="text-btn file-btn">
+                Upload PDF
+                <input class="file-input" id="resume-file" type="file" accept=".pdf,.txt,.md,application/pdf,text/plain" />
+              </label>
+            </div>
+          </div>
+          <textarea id="resume" name="resume" rows="12" placeholder="Paste the resume. Headings like Summary, Experience, Education, and Skills help the score." spellcheck="true"></textarea>
+          <p class="file-note" id="file-note" hidden></p>
+        </div>
+
+        <div class="sheet">
+          <div class="sheet-head">
+            <label for="job">Job description</label>
+          </div>
+          <textarea id="job" name="job" rows="10" placeholder="Paste the posting. The more of the real text you include, the better the keyword list." spellcheck="true"></textarea>
+        </div>
+
+        <div class="form-bar">
+          <button type="submit" class="btn" id="btn-check">
+            <span id="btn-label">Check resume</span>
+          </button>
+          <p class="status" id="status" role="status"></p>
+        </div>
+      </form>
+    </section>
+
+    <section class="chart" id="chart">
+      <article class="scorecard" id="scorecard" data-tone="idle">
+        <div class="score-main">
+          <p class="score-kicker">ATS score</p>
+          <p class="score-num" id="score">—</p>
+          <p class="band" id="band">Waiting for a resume</p>
+          <p class="page-note" id="page-note">400–900 words is the readable range. One page if you are early in your career, two if you are not.</p>
+        </div>
+        <ul class="bars" id="bars">
+          <li>
+            <div class="bar-top"><span>Sections</span><span>0/25</span></div>
+            <div class="track"><span class="fill"></span></div>
+          </li>
+          <li>
+            <div class="bar-top"><span>Keywords</span><span>0/35</span></div>
+            <div class="track"><span class="fill"></span></div>
+          </li>
+          <li>
+            <div class="bar-top"><span>Measurable impact</span><span>0/20</span></div>
+            <div class="track"><span class="fill"></span></div>
+          </li>
+          <li>
+            <div class="bar-top"><span>Action verbs</span><span>0/10</span></div>
+            <div class="track"><span class="fill"></span></div>
+          </li>
+          <li>
+            <div class="bar-top"><span>Length and clarity</span><span>0/10</span></div>
+            <div class="track"><span class="fill"></span></div>
+          </li>
+        </ul>
+      </article>
+
+      <div class="chart-tools" id="chart-tools" hidden>
+        <button type="button" class="btn ghost" id="btn-download">Download report</button>
+        <button type="button" class="btn ghost" id="btn-reset">Clear score</button>
+      </div>
+
+      <section class="panel" id="keyword-panel">
+        <div class="panel-head">
+          <h2>Keywords</h2>
+          <p id="keyword-lead">Missing ones are listed first, the ones the job repeats most often at the front.</p>
+        </div>
+        <div class="pills" id="pills">
+          <p class="placeholder">They show up here after a check. A tool the posting names six times and your resume never uses will land at the top.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Line-by-line fixes</h2>
+          <p>Each note points at a real line. v0.1 does not rewrite it for you.</p>
+        </div>
+        <div class="fixes" id="fixes">
+          <article class="fix example">
+            <p class="fix-kind">What a fix looks like</p>
+            <blockquote>Responsible for weekly reporting</blockquote>
+            <p class="fix-suggestion">Start with “Owned” instead of “responsible for”. Then add a number: time saved, % improved, users reached, or ₹ value.</p>
+          </article>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

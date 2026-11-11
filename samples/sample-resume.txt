@@ -1,0 +1,56 @@
+Asha Raman
+asha.raman@email.com | +91 98400 11223 | Bengaluru | linkedin.com/in/asharaman
+
+SUMMARY
+Analyst who turns messy retail questions into a weekly story.
+The store leads can use it on Monday morning.
+I sit with operations and pull the numbers they already have.
+I write the pack that gets discussed every Monday.
+I am looking for a role where the reporting is trusted.
+The next step is a real dashboard practice.
+I keep the notes in a shared folder the team can open.
+I label each note with the store and the week.
+
+EXPERIENCE
+Data Analyst, Northwind Retail — Bengaluru
+2022 – Present
+- Responsible for weekly sales reporting for the regional team
+- Helped with data cleanup before the monthly review
+- Worked on a dashboard the store managers open on Monday
+- Built a Python script that cut invoice reconciliation time 40%
+- Analyzed 12 months of returns and found the top 3 defect categories
+- Assisted with the tracker that records which stores missed the margin target
+- Duties included updating the commentary after leadership changed the question
+- Created a one-page brief that 18 store leads used in the Monday standup
+
+Operations Intern, Harbor Foods — Chennai
+2021 – 2022
+- Involved in the peak-season count across 9 warehouses
+- Participated in the handoff meeting where the night team explained stock gaps
+- Improved the way interns labeled the photo evidence for damaged crates
+
+EDUCATION
+B.Com, Christ University, 2021
+
+The work sits between finance and the shop floor.
+A typical week starts with the regional pack.
+Then I look at the stores that missed plan.
+I end with a short note on what changed.
+I write in plain language.
+The people reading it are not analysts.
+I would rather ship a number someone can challenge.
+A chart nobody opens is a wasted morning.
+
+Outside the weekly pack I keep a log.
+The log is the questions managers repeat.
+That log is how I decide what to automate next.
+The Python script started as one of those notes.
+The same invoice check was eating a morning.
+I wrote the steps down and then wrote the script.
+I still check the odd cases by hand.
+
+I have presented the returns story twice.
+The category team asked for it again next quarter.
+That is the closest thing I have to a product people used.
+I want the next job to make that habit the default.
+The model should open without me in the room.

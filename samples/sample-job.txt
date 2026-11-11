@@ -1,0 +1,24 @@
+Data Analyst
+Harbor Analytics — Bengaluru (hybrid)
+
+We are hiring a Data Analyst to build the reporting layer for retail operations. You will sit with business partners, define the metrics, and publish dashboards the operators actually use.
+
+What you will do
+- Build and maintain Power BI dashboards for sales, margin, and inventory
+- Write SQL to transform raw tables into a trusted model
+- Use Python for repeatable analysis when a spreadsheet is the wrong tool
+- Reconcile Excel extracts with the warehouse and document the gaps
+- Partner with analytics engineering on ETL when a source changes
+- Explain a Tableau or Power BI view to a stakeholder who does not live in the data
+
+What you bring
+- Power BI in production, not a single class project. We mention Power BI because the commercial team lives there.
+- SQL you can defend. SQL against large tables. SQL with clear structure.
+- Python for analysis, and pandas is welcome.
+- Excel for the last-mile check, including Excel models finance already trusts.
+- Tableau is a plus where a team has not moved to Power BI.
+- ETL awareness: you can describe how a broken ETL step shows up in a dashboard.
+- You have explained a number to a non-technical stakeholder and changed a decision.
+
+How we work
+The stack today is Power BI, SQL, Python, Excel, and a small amount of Tableau. The warehouse is refreshed by ETL jobs each morning. If your resume does not say Power BI, SQL, and Excel plainly, our first screen will probably miss you.

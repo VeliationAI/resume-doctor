@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resume-doctor"
+version = "0.1.0"
+description = "Score a resume against a job description and get line-by-line ATS fixes."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Veliation AI" }]
+keywords = ["resume", "ats", "cli", "job-search"]
+dependencies = [
+  "typer>=0.12.0",
+  "rich>=13.7.0",
+  "pdfplumber>=0.11.0",
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.0",
+  "jinja2>=3.1.0",
+  "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "httpx>=0.27.0"]
+
+[project.scripts]
+resume-doctor = "resume_doctor.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/VeliationAI/resume-doctor"
+Repository = "https://github.com/VeliationAI/resume-doctor"
+
+[tool.setuptools.packages.find]
+include = ["resume_doctor*"]
+
+[tool.setuptools.package-data]
+resume_doctor = ["static/*", "templates/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
