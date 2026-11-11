@@ -5,14 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from resume_doctor import __version__
 from resume_doctor.analyzer import analyze
 from resume_doctor.parser import text_from_upload
-from resume_doctor.report import to_markdown
+from resume_doctor.report import to_markdown, to_pdf
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(PACKAGE_DIR / "templates"))
@@ -45,6 +45,16 @@ def create_app() -> FastAPI:
         resume_text, job_text = await _read_check(request)
         analysis = analyze(resume_text, job_text)
         return {"report": analysis.to_dict(), "markdown": to_markdown(analysis)}
+
+    @app.post("/api/report.pdf")
+    async def report_pdf(request: Request) -> Response:
+        resume_text, job_text = await _read_check(request)
+        pdf = to_pdf(analyze(resume_text, job_text))
+        return Response(
+            content=pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": 'attachment; filename="resume-doctor-report.pdf"'},
+        )
 
     return app
 

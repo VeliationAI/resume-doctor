@@ -189,3 +189,15 @@ def test_web_check_and_health():
 
     empty = client.post("/api/check", json={"resume": "", "job": ""})
     assert empty.status_code == 400
+
+    pdf = client.post(
+        "/api/report.pdf",
+        json={
+            "resume": RESUME.read_text(encoding="utf-8"),
+            "job": JOB.read_text(encoding="utf-8"),
+        },
+    )
+    assert pdf.status_code == 200
+    assert pdf.headers["content-type"] == "application/pdf"
+    assert pdf.content.startswith(b"%PDF")
+    assert "resume-doctor-report.pdf" in pdf.headers["content-disposition"]
